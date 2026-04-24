@@ -1,0 +1,175 @@
+{
+  "theme_strategy": {
+    "domain": "Productivity & Location Tracking",
+    "theme": "Light",
+    "archetype": "4 (Swiss & High-Contrast)",
+    "mood": "Objective, reliable, minimal, and fast",
+    "description": "A mobile-first, high-contrast design emphasizing clarity. Strips away decorative elements to focus entirely on user actions (check-in/out) and map visibility. Driven by mathematical grid alignment and generous typography."
+  },
+  "colors": {
+    "background": {
+      "default": "#FFFFFF",
+      "surface": "#F8F9FA",
+      "surface_elevated": "#FFFFFF"
+    },
+    "text": {
+      "primary": "#0A0A0A",
+      "secondary": "#64748B",
+      "inverse": "#FFFFFF",
+      "accent": "#002FA7"
+    },
+    "brand": {
+      "primary": "#002FA7",
+      "primary_active": "#00227A",
+      "success": "#10B981",
+      "danger": "#EF4444",
+      "warning": "#F59E0B"
+    },
+    "border": {
+      "subtle": "#E2E8F0",
+      "focus": "#002FA7"
+    }
+  },
+  "typography": {
+    "font_family": {
+      "headings": "Work Sans",
+      "body": "Inter"
+    },
+    "sizes": {
+      "h1": {
+        "size": "32px",
+        "line_height": "36px",
+        "tracking": "-0.02em",
+        "weight": "800"
+      },
+      "h2": {
+        "size": "24px",
+        "line_height": "32px",
+        "tracking": "-0.01em",
+        "weight": "700"
+      },
+      "h3": {
+        "size": "20px",
+        "line_height": "28px",
+        "weight": "600"
+      },
+      "body_lg": {
+        "size": "18px",
+        "line_height": "26px",
+        "weight": "400"
+      },
+      "body": {
+        "size": "16px",
+        "line_height": "24px",
+        "weight": "400"
+      },
+      "label_sm": {
+        "size": "12px",
+        "line_height": "16px",
+        "tracking": "0.05em",
+        "weight": "600",
+        "text_transform": "uppercase"
+      }
+    }
+  },
+  "spacing": {
+    "p_sm": "8px",
+    "p_md": "16px",
+    "p_lg": "24px",
+    "p_xl": "32px",
+    "p_2xl": "48px",
+    "container_padding": "24px",
+    "element_gap": "16px"
+  },
+  "layout_components": {
+    "cards": {
+      "style": "flat",
+      "background": "#FFFFFF",
+      "border": "1px solid #E2E8F0",
+      "border_radius": "8px",
+      "shadow": "none",
+      "padding": "24px",
+      "description": "Go cardless where possible. When cards are needed for grouping data (like the Today's Status), use sharp 1px borders without drop shadows to maintain the Swiss aesthetic."
+    },
+    "buttons": {
+      "primary": {
+        "background": "#002FA7",
+        "text_color": "#FFFFFF",
+        "border_radius": "8px",
+        "padding_vertical": "16px",
+        "font_weight": "600",
+        "interaction": "Opacity shifts to 0.8 on active press"
+      },
+      "check_in_cta": {
+        "description": "Massive circular or rounded-rect hero button on the dashboard for staff to check in.",
+        "background": "#10B981",
+        "text_color": "#FFFFFF",
+        "border_radius": "16px",
+        "padding_vertical": "24px"
+      }
+    },
+    "inputs": {
+      "style": "Minimalistic bottom-border only, or strictly outlined.",
+      "background": "#FFFFFF",
+      "border": "1px solid #E2E8F0",
+      "border_radius": "6px",
+      "padding": "16px",
+      "focus_state": "border: 1px solid #002FA7"
+    },
+    "map_view": {
+      "style": "Desaturated, minimalist map styling.",
+      "container_radius": "8px",
+      "border": "1px solid #E2E8F0"
+    }
+  },
+  "screens": {
+    "login": {
+      "layout": "Vertical stack, generous top spacing (e.g., pt-32). Brand title in Work Sans H1. Clean email/password inputs.",
+      "action": "Full-width primary button."
+    },
+    "staff_dashboard": {
+      "layout": "Grid/Stack layout. Top: User greeting & current date. Middle: Massive Check-in / Check-out CTA. Bottom: Bento-style summary of today's hours and last known location snippet.",
+      "gps_indicator": "Use a subtle pulsing green dot for 'Location Active'."
+    },
+    "attendance_history": {
+      "layout": "Edge-to-edge list view. High-contrast typography for timestamps. Date filter sticky at the top."
+    },
+    "map_view": {
+      "layout": "Full screen map or 60% map / 40% bottom sheet. Plotting pins for check-in and check-out coordinates."
+    },
+    "admin_dashboard": {
+      "layout": "Dense control-room style. Top horizontal scroll for office locations. Vertical list for real-time staff status."
+    }
+  },
+  "media": {
+    "map_placeholder": {
+      "url": "https://images.pexels.com/photos/7634854/pexels-photo-7634854.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "Placeholder for static map views before actual Maps SDK renders."
+    },
+    "user_avatars": [
+      {
+        "url": "https://images.unsplash.com/photo-1769636929388-99eff95d3bf1?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "description": "Avatar placeholder 1"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1762522926157-bcc04bf0b10a?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "description": "Avatar placeholder 2"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1576558656222-ba66febe3dec?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "description": "Avatar placeholder 3"
+      }
+    ]
+  },
+  "testing_attributes": {
+    "instructions": "All touchable elements, form inputs, and key UI markers MUST use standard React Native `testID` props (equivalent to data-testid). Format: kebab-case, role-based. e.g., testID='check-in-submit-button'."
+  },
+  "instructions_to_main_agent": [
+    "This is a React Native Expo application. Adapt the provided design metrics (sizes in px, colors in hex) to StyleSheet objects or NativeWind classes if configured.",
+    "Do NOT use HTML elements (like <div> or <input>). Use React Native primitives (<View>, <Text>, <TextInput>, <TouchableOpacity>).",
+    "For icons, use @expo/vector-icons (Feather or Phosphor icons preferred to match the minimalist Swiss vibe).",
+    "Ensure all maps use a desaturated / silver JSON style config for Google Maps/Apple Maps to match the minimal aesthetic.",
+    "Never use raw transparent backgrounds for text-bearing headers.",
+    "Prioritize optical alignment and generous padding (minimum 24px container padding) to let elements breathe."
+  ]
+}
