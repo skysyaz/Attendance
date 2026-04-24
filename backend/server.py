@@ -325,10 +325,13 @@ async def attendance_me(user: dict = Depends(get_current_user)):
 @api_router.get("/attendance/all", response_model=List[Attendance])
 async def attendance_all(
     date: Optional[str] = None,
+    today_only: bool = False,
     user: dict = Depends(require_admin),
 ):
     query = {}
-    if date:
+    if today_only:
+        query["date"] = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    elif date:
         query["date"] = date
     records = (
         await db.attendance.find(query, {"_id": 0})

@@ -40,10 +40,9 @@ export default function AdminDashboard() {
 
   const load = useCallback(async () => {
     try {
-      const today = format(new Date(), "yyyy-MM-dd");
       const [statsRes, recRes] = await Promise.all([
         api.get("/admin/stats"),
-        api.get("/attendance/all", { params: { date: today } }),
+        api.get("/attendance/all", { params: { today_only: true } }),
       ]);
       setStats(statsRes.data);
       setRecords(recRes.data);
