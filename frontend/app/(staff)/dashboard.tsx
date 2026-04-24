@@ -17,6 +17,7 @@ import { format } from "date-fns";
 import { api, formatApiError } from "../../src/api";
 import { useAuth } from "../../src/AuthContext";
 import { colors, spacing, radius } from "../../src/theme";
+import { localToday } from "../../src/dateUtils";
 
 type Record = {
   id: string;
@@ -52,7 +53,7 @@ export default function StaffDashboard() {
   const load = useCallback(async () => {
     try {
       const [todayRes, officesRes] = await Promise.all([
-        api.get("/attendance/today"),
+        api.get("/attendance/today", { params: { client_date: localToday() } }),
         api.get("/offices"),
       ]);
       setRecord(todayRes.data.record);
@@ -103,6 +104,7 @@ export default function StaffDashboard() {
         longitude: lng,
         address,
         office_id: selectedOffice,
+        client_date: localToday(),
       });
       setRecord(data);
       Alert.alert("Checked In", "Your attendance has been recorded.");
@@ -121,6 +123,7 @@ export default function StaffDashboard() {
         latitude: lat,
         longitude: lng,
         address,
+        client_date: localToday(),
       });
       setRecord(data);
       Alert.alert("Checked Out", `Hours worked: ${data.hours_worked?.toFixed(2) || 0} h`);

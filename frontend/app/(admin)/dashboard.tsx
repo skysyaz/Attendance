@@ -13,6 +13,7 @@ import { Feather } from "@expo/vector-icons";
 import { format } from "date-fns";
 import { api } from "../../src/api";
 import { colors, spacing, radius } from "../../src/theme";
+import { localToday } from "../../src/dateUtils";
 
 type Record = {
   id: string;
@@ -40,9 +41,10 @@ export default function AdminDashboard() {
 
   const load = useCallback(async () => {
     try {
+      const today = localToday();
       const [statsRes, recRes] = await Promise.all([
-        api.get("/admin/stats"),
-        api.get("/attendance/all", { params: { today_only: true } }),
+        api.get("/admin/stats", { params: { client_date: today } }),
+        api.get("/attendance/all", { params: { date: today } }),
       ]);
       setStats(statsRes.data);
       setRecords(recRes.data);

@@ -79,6 +79,7 @@ class CheckInRequest(BaseModel):
     address: Optional[str] = None
     office_id: Optional[str] = None
     notes: Optional[str] = None
+    client_date: Optional[str] = None  # YYYY-MM-DD in user's local tz
 
 
 class CheckOutRequest(BaseModel):
@@ -86,6 +87,7 @@ class CheckOutRequest(BaseModel):
     longitude: float
     address: Optional[str] = None
     notes: Optional[str] = None
+    client_date: Optional[str] = None
 
 
 class Attendance(BaseModel):
@@ -233,7 +235,8 @@ async def delete_office(office_id: str, user: dict = Depends(require_admin)):
 # ---------- Attendance endpoints ----------
 @api_router.post("/attendance/check-in", response_model=Attendance)
 async def check_in(body: CheckInRequest, user: dict = Depends(get_current_user)):
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    # Prefer client's local date so staff + admin in the same office agree on "today"
+    today = body.client_date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
     # Prevent duplicate active check-in
     active = await db.attendance.find_one(
         {"user_id": user["id"], "date": today, "check_out_time": None},
@@ -274,7 +277,7 @@ async def check_in(body: CheckInRequest, user: dict = Depends(get_current_user))
 
 @api_router.post("/attendance/check-out", response_model=Attendance)
 async def check_out(body: CheckOutRequest, user: dict = Depends(get_current_user)):
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today = body.client_date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
     active = await db.attendance.find_one(
         {"user_id": user["id"], "date": today, "check_out_time": None}
     )
@@ -304,8 +307,8 @@ async def check_out(body: CheckOutRequest, user: dict = Depends(get_current_user
 
 
 @api_router.get("/attendance/today")
-async def attendance_today(user: dict = Depends(get_current_user)):
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+async def attendance_today(client_date: Optional[str] = None, user: dict = Depends(get_current_user)):
+    today = client_date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
     record = await db.attendance.find_one(
         {"user_id": user["id"], "date": today}, {"_id": 0}
     )
@@ -342,8 +345,8 @@ async def attendance_all(
 
 
 @api_router.get("/admin/stats")
-async def admin_stats(user: dict = Depends(require_admin)):
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+async def admin_stats(client_date: Optional[str] = None, user: dict = Depends(require_admin)):
+    today = client_date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
     total_staff = await db.users.count_documents({"role": "staff"})
     checked_in_today = await db.attendance.count_documents({"date": today})
     active_now = await db.attendance.count_documents({"date": today, "check_out_time": None})
