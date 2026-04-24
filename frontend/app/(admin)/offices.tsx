@@ -47,15 +47,47 @@ export default function Offices() {
     load();
   }, []);
 
+  const [locating, setLocating] = useState(false);
+
   const useCurrentLocation = async () => {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert("Permission denied", "Location permission is required");
-      return;
+    setLocating(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission denied", "Location permission is required");
+        return;
+      }
+      const loc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      setLat(loc.coords.latitude.toFixed(6));
+      setLng(loc.coords.longitude.toFixed(6));
+
+      // Reverse geocode to auto-fill address (and name if empty)
+      try {
+        const places = await Location.reverseGeocodeAsync({
+          latitude: loc.coords.latitude,
+          longitude: loc.coords.longitude,
+        });
+        if (places && places.length > 0) {
+          const p = places[0];
+          const addr = [p.name, p.street, p.city, p.region, p.postalCode, p.country]
+            .filter(Boolean)
+            .join(", ");
+          if (addr) setAddress(addr);
+          if (!name) {
+            const suggested = p.name || p.city || p.district || "New office";
+            setName(suggested);
+          }
+        }
+      } catch {
+        // Reverse geocoding failed silently; coords still set
+      }
+    } catch (e: any) {
+      Alert.alert("Location error", e?.message || "Unable to fetch location");
+    } finally {
+      setLocating(false);
     }
-    const loc = await Location.getCurrentPositionAsync({});
-    setLat(loc.coords.latitude.toFixed(6));
-    setLng(loc.coords.longitude.toFixed(6));
   };
 
   const addOffice = async () => {
@@ -154,10 +186,13 @@ export default function Offices() {
             <TouchableOpacity
               testID="use-current-location"
               onPress={useCurrentLocation}
-              style={styles.linkRow}
+              disabled={locating}
+              style={[styles.linkRow, locating && { opacity: 0.6 }]}
             >
               <Feather name="crosshair" size={14} color={colors.brand} />
-              <Text style={styles.linkRowText}>Use current location</Text>
+              <Text style={styles.linkRowText}>
+                {locating ? "Detecting location…" : "Use current location (auto-detects address)"}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
