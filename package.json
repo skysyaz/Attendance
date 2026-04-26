@@ -7,5 +7,15 @@
     "android": "cd frontend && npm run android",
     "ios": "cd frontend && npm run ios",
     "web": "cd frontend && npm run web"
+  },
+  "dependencies": {
+    "next": "^14.2.35",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "25.6.0",
+    "@types/react": "19.2.14",
+    "typescript": "6.0.3"
   }
 }
