@@ -742,18 +742,6 @@ netsh advfirewall firewall add rule name="Attendo Backend" dir=in action=allow p
 
 ---
 
-### ❌ `emergentintegrations` pip install fails
-This is a private/internal package. Remove it from `requirements.txt` — the core app does not use it:
-
-**PowerShell / CMD:**
-```powershell
-# Open requirements.txt and delete the line:
-# emergentintegrations==0.1.0
-notepad requirements.txt
-```
-
----
-
 ### ❌ EAS build fails: `project not configured`
 ```powershell
 cd frontend
