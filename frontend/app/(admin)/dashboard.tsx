@@ -6,6 +6,7 @@ import {
   ScrollView,
   ActivityIndicator,
   RefreshControl,
+  TouchableOpacity,
   Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -15,7 +16,7 @@ import { api } from "../../src/api";
 import { colors, spacing, radius } from "../../src/theme";
 import { localToday } from "../../src/dateUtils";
 
-type Record = {
+type AttendanceRecord = {
   id: string;
   user_name: string;
   user_email: string;
@@ -35,11 +36,13 @@ type Stats = {
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
-  const [records, setRecords] = useState<Record[]>([]);
+  const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
+    setError(null);
     try {
       const today = localToday();
       const [statsRes, recRes] = await Promise.all([
@@ -48,6 +51,8 @@ export default function AdminDashboard() {
       ]);
       setStats(statsRes.data);
       setRecords(recRes.data);
+    } catch (e: any) {
+      setError(e?.message || "Failed to load data");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -56,13 +61,26 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   if (loading) {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.center}>
           <ActivityIndicator size="large" color={colors.brand} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.center}>
+          <Text style={{ color: colors.danger, marginBottom: 16, textAlign: "center" }}>{error}</Text>
+          <TouchableOpacity onPress={load} style={{ padding: 12, backgroundColor: colors.brand, borderRadius: 8 }}>
+            <Text style={{ color: "#fff", fontWeight: "600" }}>Retry</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -104,7 +122,7 @@ export default function AdminDashboard() {
             <Text style={styles.emptyText}>No attendance records for today</Text>
           </View>
         ) : (
-          records.map((r) => (
+          records.map((r: AttendanceRecord) => (
             <View key={r.id} style={styles.row} testID={`admin-row-${r.id}`}>
               <View style={styles.avatar}>
                 <Text style={styles.avatarText}>{r.user_name?.charAt(0).toUpperCase()}</Text>

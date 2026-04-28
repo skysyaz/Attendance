@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Platform } from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
-import { Feather } from "@expo/vector-icons";
 import { format } from "date-fns";
 import { api } from "../../src/api";
 import { colors, spacing, radius } from "../../src/theme";
 
-type Record = {
+type AttendanceRecord = {
   id: string;
   check_in_time: string;
   check_in_lat: number;
@@ -19,7 +18,7 @@ type Record = {
   office_name?: string | null;
 };
 
-function buildMapHtml(records: Record[]): string {
+function buildMapHtml(records: AttendanceRecord[]): string {
   const points: any[] = [];
   records.forEach((r) => {
     points.push({
@@ -66,7 +65,7 @@ if(pts.length>0){ try{ map.fitBounds(group.getBounds().pad(0.3)); }catch(e){} }
 }
 
 export default function MapScreen() {
-  const [records, setRecords] = useState<Record[]>([]);
+  const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -111,11 +110,14 @@ export default function MapScreen() {
         <Text style={styles.count}>{records.length} days</Text>
       </View>
 
-      <View style={styles.mapWrap} testID="map-view">
+<View style={styles.mapWrap} testID="map-view">
         {Platform.OS === "web" ? (
+          // @ts-ignore - iframe is valid on web platform
           <iframe
             srcDoc={html}
-            style={{ width: "100%", height: "100%", border: "none", borderRadius: 8 }}
+            // @ts-ignore
+            allowFullScreen
+            style={{ width: "100%", height: "100%", border: "none", borderRadius: 8 } as any}
           />
         ) : (
           <WebView

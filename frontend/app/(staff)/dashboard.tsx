@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -19,7 +19,7 @@ import { useAuth } from "../../src/AuthContext";
 import { colors, spacing, radius } from "../../src/theme";
 import { localToday } from "../../src/dateUtils";
 
-type Record = {
+type AttendanceRecord = {
   id: string;
   check_in_time: string;
   check_in_lat: number;
@@ -42,13 +42,14 @@ type Office = {
 
 export default function StaffDashboard() {
   const { user } = useAuth();
-  const [record, setRecord] = useState<Record | null>(null);
+  const [record, setRecord] = useState<AttendanceRecord | null>(null);
   const [offices, setOffices] = useState<Office[]>([]);
   const [selectedOffice, setSelectedOffice] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [now, setNow] = useState(new Date());
+  const hasSetOffice = useRef(false);
 
   const load = useCallback(async () => {
     try {
@@ -58,22 +59,23 @@ export default function StaffDashboard() {
       ]);
       setRecord(todayRes.data.record);
       setOffices(officesRes.data);
-      if (!selectedOffice && officesRes.data.length > 0) {
+      if (!hasSetOffice.current && officesRes.data.length > 0) {
         setSelectedOffice(officesRes.data[0].id);
+        hasSetOffice.current = true;
       }
-    } catch (e) {
+    } catch {
       // silent
     } finally {
       setFetching(false);
       setRefreshing(false);
     }
-  }, [selectedOffice]);
+  }, []);
 
   useEffect(() => {
     load();
     const t = setInterval(() => setNow(new Date()), 1000 * 30);
     return () => clearInterval(t);
-  }, []);
+  }, [load]);
 
   const getLocation = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();

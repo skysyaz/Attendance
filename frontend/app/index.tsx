@@ -17,7 +17,7 @@ export default function Index() {
     } else {
       router.replace("/(staff)/dashboard");
     }
-  }, [user, loading]);
+  }, [user, loading, router]);
 
   return (
     <View style={styles.container} testID="splash-screen">

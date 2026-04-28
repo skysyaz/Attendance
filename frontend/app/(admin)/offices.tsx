@@ -45,7 +45,7 @@ export default function Offices() {
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   const [locating, setLocating] = useState(false);
 

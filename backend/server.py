@@ -9,13 +9,14 @@ import logging
 import uuid
 import bcrypt
 import jwt
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional
 
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, EmailStr
 
 
 # MongoDB connection
@@ -26,7 +27,79 @@ db = client[os.environ["DB_NAME"]]
 JWT_SECRET = os.environ["JWT_SECRET"]
 JWT_ALGORITHM = "HS256"
 
-app = FastAPI()
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # ---------- Startup ----------
+    await db.users.create_index("email", unique=True)
+    await db.users.create_index("id", unique=True)
+    await db.attendance.create_index([("user_id", 1), ("date", 1)])
+    await db.attendance.create_index("date")
+    await db.offices.create_index("id", unique=True)
+
+    # Seed admin
+    admin_email = os.environ.get("ADMIN_EMAIL", "admin@company.com").lower()
+    admin_password = os.environ.get("ADMIN_PASSWORD", "admin123")
+    existing = await db.users.find_one({"email": admin_email})
+    if not existing:
+        await db.users.insert_one(
+            {
+                "id": str(uuid.uuid4()),
+                "email": admin_email,
+                "password_hash": hash_password(admin_password),
+                "name": "Admin",
+                "role": "admin",
+                "employee_id": "ADMIN001",
+                "created_at": datetime.now(timezone.utc),
+            }
+        )
+        logger.info("Seeded admin user: %s", admin_email)
+
+    # Seed sample offices if none exist
+    count = await db.offices.count_documents({})
+    if count == 0:
+        await db.offices.insert_many(
+            [
+                {
+                    "id": str(uuid.uuid4()),
+                    "name": "HQ - San Francisco",
+                    "address": "100 Market Street, San Francisco, CA",
+                    "latitude": 37.7749,
+                    "longitude": -122.4194,
+                    "created_at": datetime.now(timezone.utc),
+                },
+                {
+                    "id": str(uuid.uuid4()),
+                    "name": "Office - New York",
+                    "address": "350 5th Ave, New York, NY",
+                    "latitude": 40.7484,
+                    "longitude": -73.9857,
+                    "created_at": datetime.now(timezone.utc),
+                },
+            ]
+        )
+        logger.info("Seeded sample offices")
+
+    yield
+
+    # ---------- Shutdown ----------
+    client.close()
+
+
+app = FastAPI(lifespan=lifespan)
+app.add_middleware(
+    CORSMiddleware,
+    allow_credentials=True,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 api_router = APIRouter(prefix="/api")
 
 
@@ -147,6 +220,8 @@ async def get_current_user(request: Request) -> dict:
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Authentication failed")
 
 
 async def require_admin(user: dict = Depends(get_current_user)) -> dict:
@@ -288,7 +363,7 @@ async def check_out(body: CheckOutRequest, user: dict = Depends(get_current_user
     check_in_time = active["check_in_time"]
     if check_in_time.tzinfo is None:
         check_in_time = check_in_time.replace(tzinfo=timezone.utc)
-    hours = round((check_out_time - check_in_time).total_seconds() / 3600, 2)
+    hours = max(0.0, round((check_out_time - check_in_time).total_seconds() / 3600, 2))
 
     await db.attendance.update_one(
         {"id": active["id"]},
@@ -367,80 +442,14 @@ async def list_staff(user: dict = Depends(require_admin)):
     return staff
 
 
+@api_router.get("/health")
+async def health():
+    return {"status": "ok"}
+
+
 @api_router.get("/")
 async def root():
     return {"message": "Staff Attendance API"}
 
 
 app.include_router(api_router)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-logger = logging.getLogger(__name__)
-
-
-@app.on_event("startup")
-async def startup():
-    # Indexes
-    await db.users.create_index("email", unique=True)
-    await db.users.create_index("id", unique=True)
-    await db.attendance.create_index([("user_id", 1), ("date", 1)])
-    await db.offices.create_index("id", unique=True)
-
-    # Seed admin
-    admin_email = os.environ.get("ADMIN_EMAIL", "admin@company.com").lower()
-    admin_password = os.environ.get("ADMIN_PASSWORD", "admin123")
-    existing = await db.users.find_one({"email": admin_email})
-    if not existing:
-        await db.users.insert_one(
-            {
-                "id": str(uuid.uuid4()),
-                "email": admin_email,
-                "password_hash": hash_password(admin_password),
-                "name": "Admin",
-                "role": "admin",
-                "employee_id": "ADMIN001",
-                "created_at": datetime.now(timezone.utc),
-            }
-        )
-        logger.info("Seeded admin user: %s", admin_email)
-
-    # Seed sample offices if none
-    count = await db.offices.count_documents({})
-    if count == 0:
-        await db.offices.insert_many(
-            [
-                {
-                    "id": str(uuid.uuid4()),
-                    "name": "HQ - San Francisco",
-                    "address": "100 Market Street, San Francisco, CA",
-                    "latitude": 37.7749,
-                    "longitude": -122.4194,
-                    "created_at": datetime.now(timezone.utc),
-                },
-                {
-                    "id": str(uuid.uuid4()),
-                    "name": "Office - New York",
-                    "address": "350 5th Ave, New York, NY",
-                    "latitude": 40.7484,
-                    "longitude": -73.9857,
-                    "created_at": datetime.now(timezone.utc),
-                },
-            ]
-        )
-        logger.info("Seeded sample offices")
-
-
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    client.close()

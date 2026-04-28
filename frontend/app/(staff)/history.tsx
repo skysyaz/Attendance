@@ -12,9 +12,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { format } from "date-fns";
 import { api } from "../../src/api";
-import { colors, spacing, radius } from "../../src/theme";
+import { colors, spacing } from "../../src/theme";
 
-type Record = {
+type AttendanceRecord = {
   id: string;
   check_in_time: string;
   check_out_time?: string | null;
@@ -25,7 +25,7 @@ type Record = {
 };
 
 export default function History() {
-  const [records, setRecords] = useState<Record[]>([]);
+  const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -41,9 +41,9 @@ export default function History() {
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
-  const renderItem = ({ item }: { item: Record }) => {
+  const renderItem = ({ item }: { item: AttendanceRecord }) => {
     const ci = new Date(item.check_in_time);
     const co = item.check_out_time ? new Date(item.check_out_time) : null;
     return (
