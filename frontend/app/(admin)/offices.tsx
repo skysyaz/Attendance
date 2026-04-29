@@ -33,6 +33,7 @@ export default function Offices() {
   const [lat, setLat] = useState("");
   const [lng, setLng] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [editingOffice, setEditingOffice] = useState<Office | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -90,19 +91,29 @@ export default function Offices() {
     }
   };
 
-  const addOffice = async () => {
+  const submitOffice = async () => {
     if (!name || !address || !lat || !lng) {
       Alert.alert("Missing fields", "Please fill all fields");
       return;
     }
     setSubmitting(true);
     try {
-      await api.post("/offices", {
-        name,
-        address,
-        latitude: parseFloat(lat),
-        longitude: parseFloat(lng),
-      });
+      if (editingOffice) {
+        await api.put(`/offices/${editingOffice.id}`, {
+          name,
+          address,
+          latitude: parseFloat(lat),
+          longitude: parseFloat(lng),
+        });
+        setEditingOffice(null);
+      } else {
+        await api.post("/offices", {
+          name,
+          address,
+          latitude: parseFloat(lat),
+          longitude: parseFloat(lng),
+        });
+      }
       setName("");
       setAddress("");
       setLat("");
@@ -133,6 +144,22 @@ export default function Offices() {
     ]);
   };
 
+  const editOffice = (office: Office) => {
+    setEditingOffice(office);
+    setName(office.name);
+    setAddress(office.address);
+    setLat(String(office.latitude));
+    setLng(String(office.longitude));
+  };
+
+  const cancelEdit = () => {
+    setEditingOffice(null);
+    setName("");
+    setAddress("");
+    setLat("");
+    setLng("");
+  };
+
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <KeyboardAvoidingView
@@ -144,7 +171,7 @@ export default function Offices() {
           <Text style={styles.h1}>Manage locations</Text>
 
           <View style={styles.form}>
-            <Text style={styles.sectionLabel}>ADD NEW OFFICE</Text>
+            <Text style={styles.sectionLabel}>{editingOffice ? "EDIT OFFICE" : "ADD NEW OFFICE"}</Text>
 
             <TextInput
               testID="office-name-input"
@@ -196,15 +223,25 @@ export default function Offices() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              testID="add-office-button"
-              onPress={addOffice}
+              testID="submit-office-button"
+              onPress={submitOffice}
               disabled={submitting}
               style={[styles.primaryBtn, submitting && { opacity: 0.6 }]}
             >
               <Text style={styles.primaryBtnText}>
-                {submitting ? "Adding..." : "Add office"}
+                {submitting ? (editingOffice ? "Updating..." : "Adding...") : (editingOffice ? "Update office" : "Add office")}
               </Text>
             </TouchableOpacity>
+
+            {editingOffice && (
+              <TouchableOpacity
+                testID="cancel-edit-button"
+                onPress={cancelEdit}
+                style={[styles.secondaryBtn]}
+              >
+                <Text style={styles.secondaryBtnText}>Cancel</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           <View style={styles.listHead}>
@@ -226,6 +263,13 @@ export default function Offices() {
                     {o.latitude.toFixed(5)}, {o.longitude.toFixed(5)}
                   </Text>
                 </View>
+                <TouchableOpacity
+                  onPress={() => editOffice(o)}
+                  style={styles.editBtn}
+                  testID={`edit-office-${o.id}`}
+                >
+                  <Feather name="edit-2" size={18} color={colors.brand} />
+                </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => deleteOffice(o.id)}
                   style={styles.deleteBtn}
@@ -305,4 +349,18 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
     borderRadius: radius.sm,
   },
+  editBtn: {
+    padding: spacing.sm,
+    borderRadius: radius.sm,
+    marginRight: 2,
+  },
+  secondaryBtn: {
+    marginTop: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    borderRadius: radius.md,
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+  secondaryBtnText: { color: colors.textSecondary, fontSize: 15, fontWeight: "600" },
 });

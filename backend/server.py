@@ -307,6 +307,25 @@ async def delete_office(office_id: str, user: dict = Depends(require_admin)):
     return {"success": True}
 
 
+@api_router.put("/offices/{office_id}", response_model=Office)
+async def update_office(office_id: str, body: OfficeCreate, user: dict = Depends(require_admin)):
+    # Ensure the office exists before attempting to update
+    existing_office = await db.offices.find_one({"id": office_id}, {"_id": 0})
+    if not existing_office:
+        raise HTTPException(status_code=404, detail="Office not found")
+
+    update_data = body.model_dump(exclude_unset=True)
+    update_data["created_at"] = existing_office["created_at"] # Preserve creation time
+
+    result = await db.offices.update_one({"id": office_id}, {"$set": update_data})
+    if result.modified_count == 0:
+        # This might happen if the data sent is identical to the existing data
+        logger.warning(f"Office {office_id} data not modified. Sent data might be identical.")
+
+    updated_office = await db.offices.find_one({"id": office_id}, {"_id": 0})
+    return updated_office
+
+
 # ---------- Attendance endpoints ----------
 @api_router.post("/attendance/check-in", response_model=Attendance)
 async def check_in(body: CheckInRequest, user: dict = Depends(get_current_user)):
