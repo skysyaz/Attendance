@@ -131,21 +131,36 @@ export default function Offices() {
   };
 
   const deleteOffice = (id: string) => {
-    Alert.alert("Delete office", "Are you sure?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
+    console.log("[offices] deleteOffice called:", id);
+    if (Platform.OS === "web") {
+      // window.confirm is synchronous on web — Alert.alert buttons don't work
+      if (window.confirm("Are you sure you want to delete this office?")) {
+        (async () => {
           try {
             await api.delete(`/offices/${id}`);
             await load();
           } catch (e) {
             Alert.alert("Error", formatApiError(e));
           }
+        })();
+      }
+    } else {
+      Alert.alert("Delete office", "Are you sure?", [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await api.delete(`/offices/${id}`);
+              await load();
+            } catch (e) {
+              Alert.alert("Error", formatApiError(e));
+            }
+          },
         },
-      },
-    ]);
+      ]);
+    }
   };
 
   const editOffice = (office: Office) => {
