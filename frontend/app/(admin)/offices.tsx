@@ -4,7 +4,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  Pressable,
   StyleSheet,
   ScrollView,
   Alert,
@@ -93,14 +92,11 @@ export default function Offices() {
   };
 
   const submitOffice = async () => {
-    console.log("[offices] submitOffice called, editingOffice:", editingOffice?.id);
     if (!name || !address || !lat || !lng) {
-      console.log("[offices] validation failed - empty fields");
       Alert.alert("Missing fields", "Please fill all fields");
       return;
     }
     setSubmitting(true);
-    console.log("[offices] submitting...");
     try {
       if (editingOffice) {
         await api.put(`/offices/${editingOffice.id}`, {
@@ -131,7 +127,6 @@ export default function Offices() {
   };
 
   const deleteOffice = (id: string) => {
-    console.log("[offices] deleteOffice called:", id);
     if (Platform.OS === "web") {
       // window.confirm is synchronous on web — Alert.alert buttons don't work
       if (window.confirm("Are you sure you want to delete this office?")) {
@@ -164,7 +159,6 @@ export default function Offices() {
   };
 
   const editOffice = (office: Office) => {
-    console.log("[offices] editOffice called:", office.id, office.name);
     setEditingOffice(office);
     setName(office.name);
     setAddress(office.address);
@@ -173,7 +167,6 @@ export default function Offices() {
   };
 
   const cancelEdit = () => {
-    console.log("[offices] cancelEdit called");
     setEditingOffice(null);
     setName("");
     setAddress("");
@@ -181,128 +174,140 @@ export default function Offices() {
     setLng("");
   };
 
+  const formContent = (
+    <>
+      <Text style={styles.brand}>OFFICES</Text>
+      <Text style={styles.h1}>Manage locations</Text>
+
+      <View style={styles.form}>
+        <Text style={styles.sectionLabel}>{editingOffice ? "EDIT OFFICE" : "ADD NEW OFFICE"}</Text>
+
+        <TextInput
+          testID="office-name-input"
+          placeholder="Office name"
+          placeholderTextColor={colors.textSecondary}
+          value={name}
+          onChangeText={setName}
+          style={styles.input}
+        />
+        <TextInput
+          testID="office-address-input"
+          placeholder="Street address"
+          placeholderTextColor={colors.textSecondary}
+          value={address}
+          onChangeText={setAddress}
+          style={[styles.input, { marginTop: spacing.sm }]}
+        />
+        <View style={styles.latLngRow}>
+          <TextInput
+            testID="office-lat-input"
+            placeholder="Latitude"
+            placeholderTextColor={colors.textSecondary}
+            value={lat}
+            onChangeText={setLat}
+            keyboardType="numeric"
+            style={[styles.input, { flex: 1 }]}
+          />
+          <TextInput
+            testID="office-lng-input"
+            placeholder="Longitude"
+            placeholderTextColor={colors.textSecondary}
+            value={lng}
+            onChangeText={setLng}
+            keyboardType="numeric"
+            style={[styles.input, { flex: 1, marginLeft: spacing.sm }]}
+          />
+        </View>
+
+        <TouchableOpacity
+          testID="use-current-location"
+          onPress={useCurrentLocation}
+          disabled={locating}
+          style={[styles.linkRow, locating && { opacity: 0.6 }]}
+        >
+          <Feather name="crosshair" size={14} color={colors.brand} />
+          <Text style={styles.linkRowText}>
+            {locating ? "Detecting location…" : "Use current location (auto-detects address)"}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          testID="submit-office-button"
+          onPress={submitOffice}
+          disabled={submitting}
+          style={[styles.primaryBtn, submitting && { opacity: 0.6 }]}
+        >
+          <Text style={styles.primaryBtnText}>
+            {submitting ? (editingOffice ? "Updating..." : "Adding...") : (editingOffice ? "Update office" : "Add office")}
+          </Text>
+        </TouchableOpacity>
+
+        {editingOffice && (
+          <TouchableOpacity
+            testID="cancel-edit-button"
+            onPress={cancelEdit}
+            style={[styles.secondaryBtn]}
+          >
+            <Text style={styles.secondaryBtnText}>Cancel</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      <View style={styles.listHead}>
+        <Text style={styles.sectionLabel}>ALL OFFICES</Text>
+        <Text style={styles.sectionCount}>{offices.length}</Text>
+      </View>
+
+      {loading ? (
+        <ActivityIndicator color={colors.brand} />
+      ) : offices.length === 0 ? (
+        <Text style={styles.empty}>No offices yet</Text>
+      ) : (
+        offices.map((o) => (
+          <View key={o.id} style={styles.officeCard} testID={`office-card-${o.id}`}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.officeName}>{o.name}</Text>
+              <Text style={styles.officeAddr}>{o.address}</Text>
+              <Text style={styles.officeCoord}>
+                {o.latitude.toFixed(5)}, {o.longitude.toFixed(5)}
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => editOffice(o)}
+              style={styles.editBtn}
+              testID={`edit-office-${o.id}`}
+            >
+              <Feather name="edit-2" size={18} color={colors.brand} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => deleteOffice(o.id)}
+              style={styles.deleteBtn}
+              testID={`delete-office-${o.id}`}
+            >
+              <Feather name="trash-2" size={18} color={colors.danger} />
+            </TouchableOpacity>
+          </View>
+        ))
+      )}
+    </>
+  );
+
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-      >
-        <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl }} keyboardShouldPersistTaps="handled">
-          <Text style={styles.brand}>OFFICES</Text>
-          <Text style={styles.h1}>Manage locations</Text>
-
-          <View style={styles.form}>
-            <Text style={styles.sectionLabel}>{editingOffice ? "EDIT OFFICE" : "ADD NEW OFFICE"}</Text>
-
-            <TextInput
-              testID="office-name-input"
-              placeholder="Office name"
-              placeholderTextColor={colors.textSecondary}
-              value={name}
-              onChangeText={setName}
-              style={styles.input}
-            />
-            <TextInput
-              testID="office-address-input"
-              placeholder="Street address"
-              placeholderTextColor={colors.textSecondary}
-              value={address}
-              onChangeText={setAddress}
-              style={[styles.input, { marginTop: spacing.sm }]}
-            />
-            <View style={styles.latLngRow}>
-              <TextInput
-                testID="office-lat-input"
-                placeholder="Latitude"
-                placeholderTextColor={colors.textSecondary}
-                value={lat}
-                onChangeText={setLat}
-                keyboardType="numeric"
-                style={[styles.input, { flex: 1 }]}
-              />
-              <TextInput
-                testID="office-lng-input"
-                placeholder="Longitude"
-                placeholderTextColor={colors.textSecondary}
-                value={lng}
-                onChangeText={setLng}
-                keyboardType="numeric"
-                style={[styles.input, { flex: 1, marginLeft: spacing.sm }]}
-              />
-            </View>
-
-            <TouchableOpacity
-              testID="use-current-location"
-              onPress={useCurrentLocation}
-              disabled={locating}
-              style={[styles.linkRow, locating && { opacity: 0.6 }]}
-            >
-              <Feather name="crosshair" size={14} color={colors.brand} />
-              <Text style={styles.linkRowText}>
-                {locating ? "Detecting location…" : "Use current location (auto-detects address)"}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              testID="submit-office-button"
-              onPress={submitOffice}
-              disabled={submitting}
-              style={[styles.primaryBtn, submitting && { opacity: 0.6 }]}
-            >
-              <Text style={styles.primaryBtnText}>
-                {submitting ? (editingOffice ? "Updating..." : "Adding...") : (editingOffice ? "Update office" : "Add office")}
-              </Text>
-            </TouchableOpacity>
-
-            {editingOffice && (
-              <TouchableOpacity
-                testID="cancel-edit-button"
-                onPress={cancelEdit}
-                style={[styles.secondaryBtn]}
-              >
-                <Text style={styles.secondaryBtnText}>Cancel</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-
-          <View style={styles.listHead}>
-            <Text style={styles.sectionLabel}>ALL OFFICES</Text>
-            <Text style={styles.sectionCount}>{offices.length}</Text>
-          </View>
-
-          {loading ? (
-            <ActivityIndicator color={colors.brand} />
-          ) : offices.length === 0 ? (
-            <Text style={styles.empty}>No offices yet</Text>
-          ) : (
-            offices.map((o) => (
-              <View key={o.id} style={styles.officeCard} testID={`office-card-${o.id}`}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.officeName}>{o.name}</Text>
-                  <Text style={styles.officeAddr}>{o.address}</Text>
-                  <Text style={styles.officeCoord}>
-                    {o.latitude.toFixed(5)}, {o.longitude.toFixed(5)}
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  onPress={() => editOffice(o)}
-                  style={styles.editBtn}
-                  testID={`edit-office-${o.id}`}
-                >
-                  <Feather name="edit-2" size={18} color={colors.brand} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => deleteOffice(o.id)}
-                  style={styles.deleteBtn}
-                  testID={`delete-office-${o.id}`}
-                >
-                  <Feather name="trash-2" size={18} color={colors.danger} />
-                </TouchableOpacity>
-              </View>
-            ))
-          )}
+      {Platform.OS === "web" ? (
+        <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl }}>
+          {formContent}
         </ScrollView>
-      </KeyboardAvoidingView>
+      ) : (
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
+          <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl }} keyboardShouldPersistTaps="handled">
+            {formContent}
+          </ScrollView>
+        </KeyboardAvoidingView>
+      )}
     </SafeAreaView>
   );
 }

@@ -315,12 +315,10 @@ async def update_office(office_id: str, body: OfficeCreate, user: dict = Depends
         raise HTTPException(status_code=404, detail="Office not found")
 
     update_data = body.model_dump(exclude_unset=True)
-    update_data["created_at"] = existing_office["created_at"] # Preserve creation time
 
     result = await db.offices.update_one({"id": office_id}, {"$set": update_data})
     if result.modified_count == 0:
-        # This might happen if the data sent is identical to the existing data
-        logger.warning(f"Office {office_id} data not modified. Sent data might be identical.")
+        logger.info(f"Office {office_id} not modified (data unchanged)")
 
     updated_office = await db.offices.find_one({"id": office_id}, {"_id": 0})
     return updated_office
@@ -423,11 +421,12 @@ async def attendance_me(user: dict = Depends(get_current_user)):
 async def attendance_all(
     date: Optional[str] = None,
     today_only: bool = False,
+    client_date: Optional[str] = None,
     user: dict = Depends(require_admin),
 ):
     query = {}
     if today_only:
-        query["date"] = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        query["date"] = client_date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
     elif date:
         query["date"] = date
     records = (
