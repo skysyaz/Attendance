@@ -166,7 +166,7 @@ export default function Offices() {
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl }}>
+        <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.xxl }} keyboardShouldPersistTaps="handled">
           <Text style={styles.brand}>OFFICES</Text>
           <Text style={styles.h1}>Manage locations</Text>
 
