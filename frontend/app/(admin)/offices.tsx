@@ -4,6 +4,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  Pressable,
   StyleSheet,
   ScrollView,
   Alert,
@@ -92,11 +93,14 @@ export default function Offices() {
   };
 
   const submitOffice = async () => {
+    console.log("[offices] submitOffice called, editingOffice:", editingOffice?.id);
     if (!name || !address || !lat || !lng) {
+      console.log("[offices] validation failed - empty fields");
       Alert.alert("Missing fields", "Please fill all fields");
       return;
     }
     setSubmitting(true);
+    console.log("[offices] submitting...");
     try {
       if (editingOffice) {
         await api.put(`/offices/${editingOffice.id}`, {
@@ -145,6 +149,7 @@ export default function Offices() {
   };
 
   const editOffice = (office: Office) => {
+    console.log("[offices] editOffice called:", office.id, office.name);
     setEditingOffice(office);
     setName(office.name);
     setAddress(office.address);
@@ -153,6 +158,7 @@ export default function Offices() {
   };
 
   const cancelEdit = () => {
+    console.log("[offices] cancelEdit called");
     setEditingOffice(null);
     setName("");
     setAddress("");
@@ -307,7 +313,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   latLngRow: { flexDirection: "row", marginTop: spacing.sm },
-  linkRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: spacing.md },
+  linkRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: spacing.md, cursor: "pointer" },
   linkRowText: { color: colors.brand, fontSize: 13, fontWeight: "600", marginLeft: 6 },
   primaryBtn: {
     marginTop: spacing.md,
@@ -315,6 +321,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     paddingVertical: 14,
     alignItems: "center",
+    cursor: "pointer",
   },
   primaryBtnText: { color: "#FFF", fontSize: 15, fontWeight: "600" },
   listHead: {
@@ -348,11 +355,13 @@ const styles = StyleSheet.create({
   deleteBtn: {
     padding: spacing.sm,
     borderRadius: radius.sm,
+    cursor: "pointer",
   },
   editBtn: {
     padding: spacing.sm,
     borderRadius: radius.sm,
     marginRight: 2,
+    cursor: "pointer",
   },
   secondaryBtn: {
     marginTop: spacing.sm,
@@ -361,6 +370,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     paddingVertical: 14,
     alignItems: "center",
+    cursor: "pointer",
   },
   secondaryBtnText: { color: colors.textSecondary, fontSize: 15, fontWeight: "600" },
 });
